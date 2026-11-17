@@ -1,6 +1,7 @@
 # Dependencies
+# The lockfile is committed on purpose: it pins what ships and makes installs
+# reproducible. It contains only registry URLs and integrity hashes.
 node_modules/
-package-lock.json
 
 # Test and typecheck artifacts
 scratch/
