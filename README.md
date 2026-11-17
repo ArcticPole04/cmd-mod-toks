@@ -69,10 +69,10 @@ Requires Node 22.6 or newer. There is no build step; Command Code compiles the T
 | `/toks status` | Toggle just the footer line |
 | `/toks lang en` / `zh` | Switch the report language at runtime |
 
-Launch-time defaults:
+Launch-time defaults (English is the default; the example switches away from it):
 
 ```bash
-cmd --mod-option lang=en --mod-option spinner=false
+cmd --mod-option lang=zh --mod-option spinner=false
 ```
 
 `/toks` changes take effect immediately and survive a `/reload`; launch options only seed the
@@ -214,7 +214,7 @@ cmd mods add ArcticPole04/cmd-mod-toks -g
 | `/toks status` | 只切换底栏那一行 |
 | `/toks lang en` / `zh` | 运行期切换报告语言 |
 
-启动期的默认值：
+启动期的默认值（默认语言是英文，下面的例子是切换成中文）：
 
 ```bash
 cmd --mod-option lang=zh --mod-option spinner=false

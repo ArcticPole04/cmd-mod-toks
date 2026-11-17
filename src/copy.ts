@@ -92,7 +92,12 @@ const ZH: Copy = {
  */
 const COPY: Record<Lang, Copy> = {en: EN, zh: ZH};
 
-export const DEFAULT_LANG: Lang = 'zh';
+/**
+ * English is the default because the mods hub audience is international: a
+ * Chinese-first default reads as broken to most people who install it, and
+ * `/toks lang zh` is one command away for those who want it.
+ */
+export const DEFAULT_LANG: Lang = 'en';
 
 /**
  * Resolve an option or stored value to a language.

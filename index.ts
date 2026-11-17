@@ -13,7 +13,14 @@
  */
 
 import type {ModApi, ModUiOverrideProps} from '@commandcode/harness';
-import {resolveLang, copyFor, LANG_SET, type Copy, type Lang} from './src/copy.ts';
+import {
+	resolveLang,
+	copyFor,
+	LANG_SET,
+	DEFAULT_LANG,
+	type Copy,
+	type Lang,
+} from './src/copy.ts';
 import {
 	readContent,
 	readDelta,
@@ -46,7 +53,7 @@ type DisplayFlag = 'status' | 'spinner';
 export default function (cmd: ModApi): void {
 	cmd.addFlag('status', {type: 'boolean', default: true});
 	cmd.addFlag('spinner', {type: 'boolean', default: true});
-	cmd.addFlag('lang', {type: 'string', default: 'zh'});
+	cmd.addFlag('lang', {type: 'string', default: DEFAULT_LANG});
 
 	// Both values come back from `cmd.state`, which outlives the process that wrote
 	// them, so neither is trusted until it has been validated.

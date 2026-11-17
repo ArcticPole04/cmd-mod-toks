@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import {copyFor, resolveLang, LANG_SET, type Copy} from '../src/copy.ts';
+import {copyFor, resolveLang, LANG_SET, DEFAULT_LANG, type Copy} from '../src/copy.ts';
 import {
 	clockOf,
 	describe,
@@ -132,16 +132,22 @@ test('the two languages actually differ where they should', () => {
 });
 
 test('an unknown language value falls back instead of throwing', () => {
-	assert.equal(resolveLang('fr'), 'zh');
-	assert.equal(resolveLang(undefined), 'zh');
-	assert.equal(resolveLang(42), 'zh');
-	assert.equal(resolveLang(null), 'zh');
-	assert.equal(resolveLang({}), 'zh');
+	assert.equal(resolveLang('fr'), DEFAULT_LANG);
+	assert.equal(resolveLang(undefined), DEFAULT_LANG);
+	assert.equal(resolveLang(42), DEFAULT_LANG);
+	assert.equal(resolveLang(null), DEFAULT_LANG);
+	assert.equal(resolveLang({}), DEFAULT_LANG);
+});
+
+test('the default is English so an international install is readable', () => {
+	// Regression: a `zh` default meant the mods hub audience saw Chinese copy and
+	// uninstalled, since /toks lang is only discoverable after that impression.
+	assert.equal(DEFAULT_LANG, 'en');
 });
 
 test('language matching ignores case, whitespace and region', () => {
-	// Regression: an exact `=== 'en'` check silently fell back to Chinese for every
-	// value a person would plausibly type.
+	// Regression: an exact `=== 'en'` check silently ignored every other spelling a
+	// person would plausibly type.
 	for (const value of ['en', 'EN', 'En', ' en ', 'en-US', 'en_US', 'en-GB']) {
 		assert.equal(resolveLang(value), 'en', JSON.stringify(value));
 	}
@@ -151,10 +157,10 @@ test('language matching ignores case, whitespace and region', () => {
 });
 
 test('a locale whose base is not supported falls back', () => {
-	assert.equal(resolveLang('fr-FR'), 'zh');
-	assert.equal(resolveLang('de'), 'zh');
-	assert.equal(resolveLang('-'), 'zh');
-	assert.equal(resolveLang(''), 'zh');
+	assert.equal(resolveLang('fr-FR'), DEFAULT_LANG);
+	assert.equal(resolveLang('de'), DEFAULT_LANG);
+	assert.equal(resolveLang('-'), DEFAULT_LANG);
+	assert.equal(resolveLang(''), DEFAULT_LANG);
 });
 
 test('surface labels name the surface people actually see', () => {

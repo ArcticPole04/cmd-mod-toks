@@ -21,9 +21,10 @@ First release.
   (providers that include reasoning tokens in that figure and providers that do not).
 - Phase label distinguishing reasoning from visible output.
 - Stall detection: silence longer than two seconds reads as `stalled`, not as a decaying number.
-- `lang` option (`en` / `zh`, default `zh`) and `/toks lang` at runtime. The footer line stays
+- `lang` option (`en` / `zh`, default `en`) and `/toks lang` at runtime. The footer line stays
   language-neutral (`tok/s` plus a clock) because it shares a row with the host's own English
-  segments; the phase label, report and notices are localized.
+  segments; the phase label, report and notices are localized. English is the default so a first
+  install reads correctly for the international audience; `/toks lang zh` switches it.
 - README and CHANGELOG in English and Chinese within a single file, matching the convention used by
   other Command Code mods.
 
