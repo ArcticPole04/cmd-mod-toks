@@ -45,6 +45,14 @@ rather than by running it:
 - **Adding a language required four edits.** The copy table is a `Record<Lang, Copy>` and the lookup
   is a single index, so a new language touches the union and the table only.
 
+### Attribution
+
+Reviewed the implementation history against the MIT-licensed prior art it drew on. Two earlier
+Command Code tok/s mods informed the measurement guards — `cmd-footer` (the plausibility ceiling and
+its 400 tok/s threshold) and `commandcode-tokenspeed-mod` (the 600ms EMA time constant) — and both
+are now credited in `NOTICE.md`, which also records what is original to this mod. The LICENSE
+copyright line names the account this repository belongs to instead of "contributors".
+
 ### Design decisions worth recording
 
 - **Sampling uses `message_update`, not deltas.** The event carries the whole partial message, so

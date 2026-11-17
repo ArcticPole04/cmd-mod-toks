@@ -3,6 +3,7 @@
 	"version": "0.1.0",
 	"description": "Honest tokens-per-second meter for Command Code: CJK-aware estimates, provider-usage calibration, retry-safe sampling.",
 	"license": "MIT",
+	"author": "ArcticPole04",
 	"type": "module",
 	"keywords": [
 		"cmd-mod",
@@ -35,6 +36,7 @@
 		"src",
 		"README.md",
 		"CHANGELOG.md",
+		"NOTICE.md",
 		"LICENSE"
 	],
 	"engines": {

@@ -138,7 +138,7 @@ measurement guards are also mutation-tested — invert one and the suite fails.
 
 ### License
 
-MIT
+MIT. See [NOTICE.md](./NOTICE.md) for the prior work that informed the measurement guards.
 
 ---
 
@@ -268,4 +268,4 @@ delta、缺失 usage、不把推理计入的 provider、首 token 过晚、中�
 
 ### 许可
 
-MIT
+MIT。测量守卫所借鉴的先前工作见 [NOTICE.md](./NOTICE.md)。
