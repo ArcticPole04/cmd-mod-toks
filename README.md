@@ -136,6 +136,17 @@ single-frame reasoning burst, CJK under-reporting, one-character deltas, missing
 that do not bill reasoning tokens, late first tokens, interruptions, and sparse streams. The
 measurement guards are also mutation-tested — invert one and the suite fails.
 
+### How this was written
+
+The implementation was produced with an AI coding agent (Command Code) under human direction. The
+product decisions, the measurement approach, the review standard and every design trade-off in this
+repository were specified and reviewed by a person, and the code was written to that specification.
+The test suite records the defects found during that process, including the ones the agent
+introduced and then fixed.
+
+Released under MIT. If you need an unambiguous copyright chain for a compliance purpose, treat this
+as a source-available reference rather than a warranted grant.
+
 ### License
 
 MIT. See [NOTICE.md](./NOTICE.md) for the prior work that informed the measurement guards.
@@ -265,6 +276,15 @@ test/             针对 measure、format、events、persisted 的单元测试
 测试是针对开发过程中真实出现的缺陷写的：重试重复计数、单帧推理突发、中文少报、单字符
 delta、缺失 usage、不把推理计入的 provider、首 token 过晚、中断、稀疏流。测量相关的守卫还
 做了变异测试——反转任意一条，测试就会失败。
+
+### 关于编写方式
+
+本项目的实现由 AI 编码代理（Command Code）在人的指导下产出。产品决策、测量思路、评审标准，
+以及仓库里每一处设计取舍，都由人提出并审定，代码是按这份规格写成的。测试套件记录了该过程中
+发现的缺陷，包括代理自己引入、随后又修掉的那些。
+
+以 MIT 发布。如果你的合规流程需要一条无歧义的版权链，请把它当作可获取源码的参考实现，而不是
+一份带担保的授权。
 
 ### 许可
 

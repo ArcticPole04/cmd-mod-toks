@@ -53,6 +53,15 @@ its 400 tok/s threshold) and `commandcode-tokenspeed-mod` (the 600ms EMA time co
 are now credited in `NOTICE.md`, which also records what is original to this mod. The LICENSE
 copyright line names the account this repository belongs to instead of "contributors".
 
+### Authorship disclosed
+
+The README now states that the implementation was produced with an AI coding agent under human
+direction, and says what that means for the license: nothing in npm's terms or the mods hub schema
+requires this, but MIT derives its force from copyright, and US case law is unsettled on whether
+purely machine-generated code is copyrightable. The disclosure names which decisions were human and
+points a compliance reader at the honest reading — source-available reference rather than a
+warranted grant — instead of leaving the question to be discovered later.
+
 ### Design decisions worth recording
 
 - **Sampling uses `message_update`, not deltas.** The event carries the whole partial message, so
