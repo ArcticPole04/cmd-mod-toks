@@ -1,0 +1,8 @@
+# Normalize line endings so a Windows checkout and a Linux CI produce the same
+# bytes. The published package is what matters most: a mod is loaded as source,
+# so an accidental CRLF in a template string would change what users see.
+* text=auto eol=lf
+
+*.png binary
+*.gif binary
+*.jpg binary

@@ -1,0 +1,54 @@
+{
+	"name": "cmd-mod-toks",
+	"version": "0.1.0",
+	"description": "Honest tokens-per-second meter for Command Code: CJK-aware estimates, provider-usage calibration, retry-safe sampling.",
+	"license": "MIT",
+	"type": "module",
+	"keywords": [
+		"cmd-mod",
+		"cmd-mod-hook",
+		"cmd-mod-flag",
+		"cmd-mod-command",
+		"command-code",
+		"tokens-per-second",
+		"throughput",
+		"status-line"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/ArcticPole04/cmd-mod-toks.git"
+	},
+	"homepage": "https://github.com/ArcticPole04/cmd-mod-toks#readme",
+	"bugs": {
+		"url": "https://github.com/ArcticPole04/cmd-mod-toks/issues"
+	},
+	"commandcode": {
+		"mods": [
+			"./index.ts"
+		]
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"files": [
+		"index.ts",
+		"src",
+		"README.md",
+		"CHANGELOG.md",
+		"LICENSE"
+	],
+	"engines": {
+		"node": ">=22.6"
+	},
+	"scripts": {
+		"test": "node --experimental-strip-types --test test/*.test.ts",
+		"test:watch": "node --experimental-strip-types --test --watch test/*.test.ts",
+		"typecheck": "tsc --noEmit -p tsconfig.json",
+		"ci": "npm test && npm run typecheck",
+		"prepublishOnly": "npm test"
+	},
+	"devDependencies": {
+		"@types/node": "^26.6.6",
+		"typescript": "^5.9.3"
+	}
+}

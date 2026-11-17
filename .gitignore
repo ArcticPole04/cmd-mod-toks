@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Test and typecheck artifacts
+scratch/
+*.mutation-backup
+*.tgz
+
+# Host state created when a mod loads
+.commandcode/
+
+# Logs and editor files
+*.log
+.DS_Store
+.idea/
+.vscode/
