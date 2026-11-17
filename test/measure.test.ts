@@ -285,9 +285,9 @@ test('calibration uses the total when the provider bills reasoning tokens', () =
 });
 
 test('calibration uses the billed figure when reasoning is not billed', () => {
-	// Regression: deepseek reported 303 tokens for 731 characters of thinking plus
-	// 222 of text. Calibrating against the total (953) scaled every live reading
-	// down 3x, so the closer candidate has to win.
+	// Regression: one provider reported 303 tokens for 731 characters of thinking
+	// plus 222 of text. Calibrating against the total (953) scaled every live
+	// reading down 3x, so the closer candidate has to win.
 	const ratio = pickCalibration(303, 953, 222);
 	assert.ok(ratio !== null);
 	assert.ok(Math.abs(ratio - 303 / 222) < 0.001, `got ${ratio}`);

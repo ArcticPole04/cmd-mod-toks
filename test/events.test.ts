@@ -52,7 +52,7 @@ test('snake_case output_tokens is not silently accepted as a match', () => {
 });
 
 test('the model name is read when present and empty otherwise', () => {
-	assert.equal(readModel({model: 'deepseek/deepseek-v4.1-flash'}), 'deepseek/deepseek-v4.1-flash');
+	assert.equal(readModel({model: 'vendor/model-name'}), 'vendor/model-name');
 	assert.equal(readModel({}), '');
 	assert.equal(readModel({model: 7}), '');
 	assert.equal(readModel(null), '');
