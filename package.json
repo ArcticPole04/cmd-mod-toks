@@ -47,7 +47,7 @@
 		"test:watch": "node --experimental-strip-types --test --watch test/*.test.ts",
 		"typecheck": "tsc --noEmit -p tsconfig.json",
 		"ci": "npm test && npm run typecheck",
-		"prepublishOnly": "npm test"
+		"prepublishOnly": "npm run ci"
 	},
 	"devDependencies": {
 		"@types/node": "^26.6.6",

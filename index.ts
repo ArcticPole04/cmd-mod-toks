@@ -18,6 +18,7 @@ import {
 	copyFor,
 	LANG_SET,
 	DEFAULT_LANG,
+	isLang,
 	type Copy,
 	type Lang,
 } from './src/copy.ts';
@@ -56,8 +57,14 @@ export default function (cmd: ModApi): void {
 	cmd.addFlag('lang', {type: 'string', default: DEFAULT_LANG});
 
 	// Both values come back from `cmd.state`, which outlives the process that wrote
-	// them, so neither is trusted until it has been validated.
-	let lang: Lang = resolveLang(cmd.state.get<unknown>('lang') ?? cmd.getFlag('lang'));
+	// them, so neither is trusted until it has been validated. A stored value is
+	// honoured only when it actually names a supported language; a stale or
+	// malformed string must not shadow the flag, since `resolveLang` alone
+	// cannot tell a real choice from its fallback.
+	const storedLang = cmd.state.get<unknown>('lang');
+	let lang: Lang = isLang(storedLang)
+		? resolveLang(storedLang)
+		: resolveLang(cmd.getFlag('lang'));
 	let copy: Copy = copyFor(lang);
 
 	let samples: Sample[] = [];
@@ -215,6 +222,13 @@ export default function (cmd: ModApi): void {
 		if (ema !== null) lastEmaAt = now;
 		if (ema === null) return undefined;
 
+		// The calibrated reading is deliberately not capped at
+		// `MAX_PLAUSIBLE_RATE`. That ceiling rejects an uncalibrated burst
+		// inside `nextEma`; here the value is the calibrated estimate, anchored
+		// to the provider's own reported count, so a figure above 400 is a
+		// correction of an undercount rather than a fabricated burst. The
+		// footer reading written by `finalizeRequest` stays uncalibrated and
+		// capped, so the two surfaces keep their own honest standards.
 		const reading = {
 			rate: Math.max(ema, 0) * correction,
 			phase,
@@ -238,7 +252,10 @@ export default function (cmd: ModApi): void {
 
 			// The language switch applies at runtime, like the display toggles, so a
 			// terminal that renders one script better does not need a restart.
-			if (action.startsWith('lang')) {
+			// Only a bare `lang` or `lang <value>` switches the language: a
+			// prefix match would also swallow `langzh` and `language`, the latter
+			// wrongly reporting a successful switch.
+			if (action === 'lang' || action.startsWith('lang ')) {
 				const value = action.slice(4).trim();
 				if (value !== 'en' && value !== 'zh') {
 					return {message: LANG_SET};

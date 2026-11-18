@@ -115,6 +115,19 @@ export function resolveLang(value: unknown): Lang {
 	return DEFAULT_LANG;
 }
 
+/**
+ * Whether a raw value names one of the supported languages.
+ *
+ * `resolveLang` folds an unrecognized value to the default, so it cannot tell a
+ * deliberate `en` from a stale string that fell back to it. A caller that needs
+ * to know whether a stored value was a real choice uses this predicate first.
+ */
+export function isLang(value: unknown): value is Lang {
+	if (typeof value !== 'string') return false;
+	const base = value.trim().toLowerCase().split(/[-_]/)[0];
+	return base !== undefined && Object.hasOwn(COPY, base);
+}
+
 export function copyFor(lang: Lang): Copy {
 	return COPY[lang];
 }

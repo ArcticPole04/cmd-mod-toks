@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import {MAX_PLAUSIBLE_RATE} from '../src/measure.ts';
 import {readStoredRequest} from '../src/persisted.ts';
 
 /** A value shaped like what this mod writes today. */
@@ -118,4 +119,37 @@ test('the validated value never contains NaN or Infinity', () => {
 		assert.ok(Number.isFinite(value), `${value} should be finite`);
 	}
 	if (stored.ttftMs !== null) assert.ok(Number.isFinite(stored.ttftMs));
+});
+
+test('the writer invariants are enforced on the read side', () => {
+	// Regression: the read side only checked finiteness, so a damaged value could
+	// be repainted as a plausible number. Accept only what finalizeRequest would
+	// have written.
+	assert.equal(readStoredRequest(valid({rate: 0})), null);
+	assert.equal(readStoredRequest(valid({rate: -1})), null);
+	assert.equal(readStoredRequest(valid({rate: MAX_PLAUSIBLE_RATE + 1})), null);
+	assert.equal(readStoredRequest(valid({output: 0})), null);
+	assert.equal(readStoredRequest(valid({decodeMs: 0})), null);
+	assert.equal(readStoredRequest(valid({ttftMs: -1})), null);
+});
+
+test('the writer invariant boundaries are accepted', () => {
+	assert.ok(readStoredRequest(valid({rate: MAX_PLAUSIBLE_RATE})) !== null);
+	assert.ok(readStoredRequest(valid({output: 1})) !== null);
+	assert.ok(readStoredRequest(valid({decodeMs: 1})) !== null);
+});
+
+test('a timestamp outside the Date range is rejected', () => {
+	assert.equal(readStoredRequest(valid({at: 1e300})), null);
+	assert.equal(readStoredRequest(valid({at: -1e300})), null);
+	assert.equal(readStoredRequest(valid({at: 8.64e15 + 1})), null);
+	assert.equal(readStoredRequest(valid({at: -8.64e15 - 1})), null);
+});
+
+test('the Date range boundary itself is accepted', () => {
+	// The limit is Date.MAX_VALUE, not one past it; a timestamp at the edge is
+	// still a real moment.
+	const stored = readStoredRequest(valid({at: 8.64e15}));
+	assert.ok(stored !== null);
+	assert.equal(stored.at, 8.64e15);
 });

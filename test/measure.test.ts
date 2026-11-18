@@ -11,11 +11,14 @@ import {
 	CALIBRATION_ALPHA,
 	CALIBRATION_MAX,
 	CALIBRATION_MIN,
+	CHARS_PER_TOKEN,
 	estimateContent,
 	estimateTokens,
 	finalizeRequest,
 	MAX_PLAUSIBLE_RATE,
+	MAX_SAMPLES,
 	MIN_LIVE_GROWTH,
+	MIN_RATE_MS,
 	MIN_SPAN_MS,
 	nextEma,
 	pickCalibration,
@@ -38,9 +41,13 @@ test('CJK estimates about one token per character', () => {
 	assert.equal(estimateTokens('潮汐锁定'), 4);
 });
 
-test('Latin estimates roughly one token per 3.6 characters', () => {
+test('Latin estimates roughly one token per CHARS_PER_TOKEN characters', () => {
 	const value = estimateTokens('the quick brown fox jumps');
-	assert.ok(Math.abs(value - 25 / 3.6) < 0.01, `got ${value}`);
+	assert.ok(Math.abs(value - 25 / CHARS_PER_TOKEN) < 0.01, `got ${value}`);
+});
+
+test('CHARS_PER_TOKEN is exported so tests can derive their expectations', () => {
+	assert.ok(CHARS_PER_TOKEN > 1, 'the constant must be a usable divisor');
 });
 
 test('a CJK/ASCII mix lands between the two extremes', () => {
@@ -161,6 +168,21 @@ test('enough frames in the window make the same rate measurable', () => {
 	assert.ok(ema !== null, 'a genuinely streamed window must still measure');
 });
 
+test('a sparse window is widened so a slow stream still gets a reading', () => {
+	// Regression: a provider that emits one frame per 400ms never fills the 600ms
+	// window with three frames, so widening had to add the oldest frames back.
+	// Without it the window holds two frames, the frame loop never runs, and the
+	// reading disappears.
+	const samples = series([
+		[0, 0],
+		[400, 10],
+		[800, 20],
+	]);
+	const ema = nextEma(samples, 800, null, 0);
+	assert.ok(ema !== null, 'the window must be widened to the newest frames');
+	assert.ok(Math.abs(ema - 25) < 1, `got ${ema}`);
+});
+
 test('a rate above the ceiling is rejected rather than clamped', () => {
 	// Clamping would invent a number that looks authoritative; withholding is the
 	// honest answer, and the next window produces a real measurement.
@@ -215,6 +237,39 @@ test('a genuinely slow stream still reports', () => {
 	assert.ok(ema > 0 && ema < 40, `got ${ema}`);
 });
 
+test('an even number of frames averages the two middle rates', () => {
+	// Regression: the median comment claimed the lower of the two middles while
+	// the code averages them. The reading has to match the implementation.
+	const samples = series([
+		[0, 0],
+		[100, 10],
+		[200, 20],
+		[300, 40],
+		[400, 70],
+		[500, 100],
+	]);
+	const ema = nextEma(samples, 500, null, 0);
+	assert.ok(ema !== null, 'expected a reading');
+	assert.ok(Math.abs(ema - 250) < 0.01, `got ${ema}`);
+});
+
+test('the leading two frames of the window are skipped, not just the request start', () => {
+	// Regression: the skip is window-relative, so a window that still begins at
+	// the request's frame 0 drops the buffered frame-0 and frame-1 deltas. A huge
+	// first delta must not reach the reading. The middle of the remaining rates
+	// (100 and 300) is 200; including the buffered frame-0 rate would make the
+	// median 300, so the assertion pins the skip index to 2.
+	const samples = series([
+		[0, 0],
+		[100, 9000], // buffered hand-over: 90,000 tok/s if it were a delta
+		[200, 9010], // +10 tokens over 100ms -> 100 tok/s
+		[300, 9040], // +30 tokens over 100ms -> 300 tok/s
+	]);
+	const ema = nextEma(samples, 300, null, 0);
+	assert.ok(ema !== null, 'expected a reading from the third frame');
+	assert.ok(Math.abs(ema - 200) < 0.01, `got ${ema}`);
+});
+
 test('the EMA moves toward the new rate without jumping to it', () => {
 	const slow = series([
 		[0, 0],
@@ -264,6 +319,50 @@ test('pruning drops stale samples but keeps the newest two', () => {
 	const kept = pruneSamples(samples, 10_100);
 	assert.ok(kept.length >= 2);
 	assert.equal(kept[kept.length - 1]!.total, 30);
+});
+
+test('pruning keeps every sample still inside the window', () => {
+	// Regression: the floor drops samples older than WINDOW_MS * 4, so samples
+	// that are all recent must not be trimmed.
+	const now = 100_000;
+	const samples = series([
+		[now - 100, 1],
+		[now - 50, 2],
+		[now - 10, 3],
+	]);
+	assert.deepEqual(pruneSamples(samples, now), samples);
+});
+
+test('pruning keeps exactly the two newest samples when everything is stale', () => {
+	// The newest-two floor is deliberate: it must not fall back to a single
+	// sample, and it must not leave a stale one behind.
+	const now = 1_000_000;
+	const samples = series([
+		[0, 1],
+		[1, 2],
+		[2, 3],
+		[3, 4],
+	]);
+	const kept = pruneSamples(samples, now);
+	assert.equal(kept.length, 2);
+	assert.equal(kept[0]!.total, 3);
+	assert.equal(kept[1]!.total, 4);
+});
+
+test('pruning truncates a long live window to the newest MAX_SAMPLES', () => {
+	// Regression: the cap is a plain constant, so a mutation of it must change
+	// the result. The expected count is therefore the literal, and the constant
+	// is asserted first to keep the test honest.
+	assert.equal(MAX_SAMPLES, 600, 'this test pins the documented cap');
+
+	const now = 10_000_000;
+	const samples = series(
+		Array.from({length: 601}, (_, i) => [now - (601 - i), i + 1] as [number, number]),
+	);
+	const kept = pruneSamples(samples, now);
+	assert.equal(kept.length, 600);
+	assert.equal(kept[0]!.total, 2);
+	assert.equal(kept[599]!.total, 601);
 });
 
 test('stall detection reports silence only after the threshold', () => {
@@ -358,6 +457,31 @@ test('no output tokens means no reading', () => {
 
 test('a request too short to measure is dropped', () => {
 	assert.equal(finalizeRequest({output: 5, ms: 10, ttftMs: 0, model: 'm', at: 0}), null);
+});
+
+test('a request exactly at the minimum span is measured, one below is dropped', () => {
+	// Regression: MIN_RATE_MS was a live threshold that nothing pinned. The
+	// boundary itself must be admitted and the value just under it must not. The
+	// expected spans are literals so a mutation of the constant changes the result.
+	assert.equal(MIN_RATE_MS, 50, 'this test pins the documented threshold');
+
+	const atBoundary = finalizeRequest({
+		output: 10,
+		ms: 50,
+		ttftMs: 0,
+		model: 'm',
+		at: 0,
+	});
+	assert.ok(atBoundary !== null, 'ms === 50 must not be dropped');
+
+	const below = finalizeRequest({
+		output: 10,
+		ms: 49,
+		ttftMs: 0,
+		model: 'm',
+		at: 0,
+	});
+	assert.equal(below, null, 'ms just under the floor must be dropped');
 });
 
 test('a missing first-token timestamp uses the whole span', () => {

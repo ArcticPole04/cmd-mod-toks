@@ -50,8 +50,11 @@ export const CALIBRATION_MAX = 3;
 /** Weight of a new sample in the calibration EMA. */
 export const CALIBRATION_ALPHA = 0.3;
 
-/** Average characters per token for scripts that are not CJK. */
-const CHARS_PER_TOKEN = 3.6;
+/**
+ * Average characters per token for scripts that are not CJK. Exported so tests
+ * can derive their expected values instead of re-hardcoding the constant.
+ */
+export const CHARS_PER_TOKEN = 3.6;
 
 export type Phase = 'thinking' | 'writing';
 
@@ -118,6 +121,12 @@ export function estimateTokens(text: string): number {
 /**
  * Estimate a whole partial message. `message_update` carries every block, so
  * tool arguments count too — they are billed but never arrive as a text delta.
+ *
+ * Cost note: the host re-sends the whole partial message on every frame, so
+ * each call re-walks every character — O(characters) per frame and
+ * O(characters × frames) across a request. At the observed scale (a 32k-token
+ * request is roughly 1.1e5 characters over ~2300 frames) the total is bounded
+ * by the message size, so this is left uncached rather than keyed per block.
  */
 export function estimateContent(content: unknown): ContentEstimate | null {
 	if (!Array.isArray(content)) return null;
@@ -211,9 +220,8 @@ export function nextEma(
 	const spanMs = newest.at - oldest.at;
 	if (spanMs < MIN_SPAN_MS) return ema;
 
-	// One frame is all a buffered flush looks like; it is not a decode timeline.
-	if (window.length < 2) return ema;
-
+	// One frame cannot be a decode timeline, but that is already covered above:
+	// a single-frame window has spanMs === 0, well under the span floor.
 	const growth = newest.total - oldest.total;
 	if (growth < MIN_LIVE_GROWTH) return ema;
 
@@ -222,9 +230,12 @@ export function nextEma(
 	// speed and the mean is not: a single 700-token frame would otherwise define
 	// the whole window even when everything around it ran at 60 tok/s.
 	//
-	// The first frame of a request is skipped because it carries whatever the
-	// provider buffered before streaming (measured: 428 tokens in frame 0 against
-	// a median of 3 for the rest). Including it as a delta invents a huge rate.
+	// The first frame of a request carries whatever the provider buffered before
+	// streaming (measured: 428 tokens in frame 0 against a median of 3 for the
+	// rest). Including it as a delta invents a huge rate, so the skip starts at
+	// index 2. Note this is window-relative, not request-relative: a window that
+	// slides past the request's first frames still drops its own leading two
+	// frames, which a sparse delivery can make the whole window's only deltas.
 	const rates: number[] = [];
 	for (let i = 2; i < window.length; i += 1) {
 		const previous = window[i - 1]!;
@@ -247,7 +258,7 @@ export function nextEma(
 	return ema + (instant - ema) * alpha;
 }
 
-/** Middle value of a non-empty list; the lower of the two middles when even. */
+/** Middle value of a non-empty list; the average of the two middles when even. */
 function median(values: readonly number[]): number {
 	const sorted = [...values].sort((a, b) => a - b);
 	const middle = Math.floor(sorted.length / 2);
@@ -255,7 +266,15 @@ function median(values: readonly number[]): number {
 	return (sorted[middle - 1]! + sorted[middle]!) / 2;
 }
 
-/** Drop samples outside the retained window. Kept separate so it is testable. */
+/**
+ * Drop samples outside the retained window, and cap the retained count. Kept
+ * separate so it is testable.
+ *
+ * Two independent rules: samples older than `WINDOW_MS * 4` are dropped, but the
+ * newest two are always kept as a floor, so a burst never empties the buffer
+ * completely. Separately, the retained count is capped at `MAX_SAMPLES`, keeping
+ * the newest.
+ */
 export function pruneSamples(samples: readonly Sample[], now: number): Sample[] {
 	const floor = now - WINDOW_MS * 4;
 	let start = 0;

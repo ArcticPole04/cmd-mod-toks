@@ -15,5 +15,5 @@
 		"noEmit": true,
 		"skipLibCheck": true
 	},
-	"include": ["index.ts", "src/**/*.ts", "test/harness.d.ts"]
+	"include": ["index.ts", "src/**/*.ts", "test/**/*.ts"]
 }
