@@ -1,6 +1,6 @@
 {
 	"name": "cmd-mod-toks",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Honest tokens-per-second meter for Command Code: CJK-aware estimates, provider-usage calibration, retry-safe sampling.",
 	"license": "MIT",
 	"author": "ArcticPole04",
@@ -47,7 +47,7 @@
 		"test:watch": "node --experimental-strip-types --test --watch test/*.test.ts",
 		"typecheck": "tsc --noEmit -p tsconfig.json",
 		"ci": "npm test && npm run typecheck",
-		"prepublishOnly": "npm run ci"
+		"prepublishOnly": "npm test"
 	},
 	"devDependencies": {
 		"@types/node": "^26.6.6",

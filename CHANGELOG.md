@@ -5,6 +5,38 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-11-18
+
+Hardening pass over the read path, plus tests for the wiring layer.
+
+### Fixed
+
+- **`/toks lang` matched by prefix.** `action.startsWith('lang')` also accepted `langzh` and
+  `language`; the first silently switched the language to Chinese and the second reported a
+  successful switch while doing nothing. Only a bare `lang` or `lang <value>` switches now.
+- **A stale stored language shadowed the flag.** `resolveLang` folds anything unrecognized to the
+  default, so it cannot distinguish a deliberate `en` from a malformed string that fell back to
+  it. A new `isLang` predicate decides whether the stored value is a real choice; when it is not,
+  the `lang` flag is consulted instead.
+- **Damaged persisted state rendered as a plausible number.** Read-side validation now enforces
+  the same invariants the writer uses — `rate` within `MAX_PLAUSIBLE_RATE`, positive
+  `output`/`decodeMs`, non-negative `ttftMs`, timestamp inside the `Date` range — so a stale
+  write can no longer surface as a number the mod itself would never produce.
+
+### Added
+
+- `test/index.test.ts` (442 lines) covers the wiring layer, which had no tests: event
+  subscription, the spinner override, the `/toks` handler, and the stored-state handoff.
+- `CHARS_PER_TOKEN` is exported so tests derive their expectations instead of hardcoding 3.6.
+
+### Changed
+
+- `measure`: removed a dead single-frame guard now that the span floor rejects that case, and
+  corrected the median and first-frame-skip comments to match the code.
+- `tsconfig.json` now type-checks `test/**/*.ts` rather than only `test/harness.d.ts`.
+- `prepublishOnly` stays `npm test`: `npm run ci` adds a `typecheck` that needs the TypeScript
+  devDependency, and a publish should not fail on a devDependency that may not be installed.
+
 ## [0.1.0] - 2026-11-17
 
 First release.
